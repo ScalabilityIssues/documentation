@@ -8,9 +8,9 @@ In addition the company wants to increase its business so it wants to estimate t
 
 ## Users
 
-- 100k daily customers / anonymous customers
-- 200 staff users
-- 10 admin users
+- ~100k daily customers / anonymous customers
+- ~200 staff users
+- ~10 admin users
 
 
 ## Requirements
@@ -20,9 +20,8 @@ In addition the company wants to increase its business so it wants to estimate t
 - Support selling tickets with varying prices to customers
 - Support email notifications for ticket updates to customers
 - Ticket validation before boarding by staff
-- Check-in for flights only online for customers
-- 100+ flights every day
-- 250 tickets per flight
+- ~100 flights every day
+- ~250 tickets per flight
 
 
 ## Additional Context
