@@ -1,5 +1,5 @@
 # Architectural Characteristics
-We analyze the architecture characteristics the system would like to achieve, listed in order of importance:
+Down here are defined the architecture characteristics the system would like to achieve, listed in order of importance:
 
 ## Reliability
 - Measure: units of failure that can be tolerated by the system per unit of time
@@ -8,7 +8,7 @@ We analyze the architecture characteristics the system would like to achieve, li
 - Quantification: the system should admit up to 10 unconventional behaviours per month and 99.5% of uptime
 
 ## Modularity
-- Measure: degree to which the software is composed of discrete (logical) components
+- Measure: degree to which the software is composed of discrete components
 - Reference to requirement: 2, 3, 4, 5 <br/>
     These requirements define the different domains of the application (flight management, ticket sales, user interactions, and boarding)
 - Quantification: our system should be designed to have high cohesion and low coupling by dividing it in 4 services according to the domains defined above
