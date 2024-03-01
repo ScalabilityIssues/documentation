@@ -1,30 +1,42 @@
 # Services' duties
-## Sale service
-- Get the estimated price
-- Manage sales (interact with user and look at flight management service)
-- At the end of the process send a request yo ticket service
 
+## Sale service
+
+- Handle the discover and purchase flow
+  - Generate ticket offers (JWT with flight details and price)
+  - Payments handled with a stub
+- Handle the process of ticket details modification
+- At the end of the process send an event to the broker; ticket service listen for that kind of events and manage them
 
 ## Ticket service
-- Keep track on sold tickets and disponibility of the airplain
-- Interact with events related to flight management service
-- Send to queueing system when ticket are sold an event (publish)
 
-## Validation service
-- Validate the clients tickets
+- Keep track of sold tickets and free seats of the flight
+- Interact with events related to flight management service to create or modify tickets
+- Send new or modified tickets to broker in order to nofify the client
+
+## Boarding service
+
+- has a db containing the validations
+- maybe after the fly landed the validations can be moved to a different db with historical aggregated data (like flight_id: passanger_number)
+- read from ticket service to verify if the ticket is valid
 
 ## Flight management service
+
 - Manage the flight creation, update, delation done by the staff
 - Interact with queueing system to send updates on the flights (publish)
 
 ## Update service
+
 - Listen for flight changes (subscribe) and schedule email jobs to to ticket holders (publish)
 
 ## Mail service
+
 - Listen for emails to send (subscribe), emails send on creation, update or delete
 
 ## Auth service
+
 - manage the authentication sessions
 
 ## Admin/Staff stervice
+
 - Keep track on the admin/staff information
