@@ -17,8 +17,10 @@
 ## Boarding service
 
 - has a db containing the validations
+- has a db containing the invalid tickets
+- handle the cryptographic signing of tickets through a rpc method
+- handle the keys to decrypt the tickets
 - maybe after the fly landed the validations can be moved to a different db with historical aggregated data (like flight_id: passanger_number)
-- read from ticket service to verify if the ticket is valid
 
 ## Flight management service
 
@@ -37,6 +39,6 @@
 
 - manage the authentication sessions
 
-## Admin/Staff stervice
+## Admin/Staff service
 
 - Keep track on the admin/staff information
