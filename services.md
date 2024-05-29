@@ -2,41 +2,43 @@
 
 ## Sale service
 
-- Handle the discover and purchase flow
+- Handle the ticket's discover and purchase flow
   - Generate ticket offers (JWT with flight details and price)
-  - Payments simulated
+  - Payments are simulated
 - Afterwards creates ticket
 
 
 ## Ticket service
 
-- Keep track of sold tickets and free seats of the flight
-- Send new or modified tickets to broker in order to nofify the client
+- Manage tickets creation, update and delete
+- Before a ticket creation check that a seat is available for that flight
+- After a ticket creation or update, publish on the broker to notify the client
 
 
-## Boarding service
-
-- handle the cryptographic signing of tickets through a rpc method
-- handle the keys to decrypt the tickets
+## Validation service
+- Handle the cryptographic signing of tickets through a rpc method
+- When a ticket is signed, a qr code is generated containing the ticket and the signature; this is necessary to check the validity of the ticket
+- Handle the keys to verify tickets
 
 
 ## Flight management service
-
-- Manage the flight creation, update, delation done by the staff
-- Interact with queueing system to send updates on the flights (publish)
+- Manage flights creation, update and delete
+- After a flight modification, publish on the broker to notify clients that have a ticket on that flight
 
 
 ## Update service
-
-- Listen for flight changes (subscribe) and sends emails to ticket holders
+- Listen from the broker for changes on flights and send emails to users that have a ticket for that flight
+- Listen from the broker for changes on tickets and send an email to the user owner of the ticket
 
 
 ## Frontend
-- Public side
+- Customer side
   - flight search
   - ticket purchase
   - ticket visualization
 - Staff side
-  - validation
+  - tickets validation
 - Admin side
-  - flight management: create flights, create planes
+  - flight management
+    - create flights
+    - create planes
