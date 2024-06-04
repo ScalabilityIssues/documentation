@@ -22,6 +22,8 @@
 
 
 ## Flight management service
+- Manage airports creation, update and delete
+- Manage planes creation, update and delete
 - Manage flights creation, update and delete
 - After a flight modification, publish on the broker to notify clients that have a ticket on that flight
 
