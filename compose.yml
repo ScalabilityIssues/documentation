@@ -1,0 +1,222 @@
+name: simurgh-demo
+
+services:
+  
+  proxy:
+    image: traefik:3.0
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # grpc entrypoint
+      - --entrypoints.grpc.address=:50051
+      - --entrypoints.web.address=:80
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.grpcweb.grpcweb.allowOrigins=*
+
+  frontend:
+    image: ghcr.io/scalabilityissues/frontend:main
+    pull_policy: always
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=PathPrefix(`/`)
+      - traefik.http.services.frontend.loadbalancer.server.port=80
+
+  rabbitmq:
+    image: rabbitmq:3
+    restart: unless-stopped
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_port_connectivity
+      interval: 4m
+      start_period: 30s
+      start_interval: 5s
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  flightmngr:
+    image: ghcr.io/scalabilityissues/flight-manager:main
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:pwd@flightmngr-db:5432
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_HOST: "rabbitmq"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.flightmngr.rule=PathPrefix(`/flightmngr.`)
+      - traefik.http.routers.flightmngr.middlewares=grpcweb
+      - traefik.http.services.flightmngr.loadbalancer.server.port=50051
+      - traefik.http.services.flightmngr.loadbalancer.server.scheme=h2c
+
+  flightmngr-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - flightmngr-pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: pwd
+
+  salesvc:
+    image: ghcr.io/scalabilityissues/sale-service:main
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      TOKEN_SECRET: "secret"
+      PRICEEST_URL: http://price-predict:50051
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.salesvc.rule=PathPrefix(`/salesvc.`)
+      - traefik.http.routers.salesvc.middlewares=grpcweb
+      - traefik.http.services.salesvc.loadbalancer.server.port=50051
+      - traefik.http.services.salesvc.loadbalancer.server.scheme=h2c
+
+  ticketsvc:
+    image: ghcr.io/scalabilityissues/ticket-service:master
+    pull_policy: always
+    restart: unless-stopped
+    environment:    
+        DATABASE_URL: "mongodb://mongo:mongo@ticketsvc-db:27017/"
+        RABBITMQ_USERNAME: "guest"
+        RABBITMQ_PASSWORD: "guest"
+        RABBITMQ_HOST: "rabbitmq"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ticketsvc.rule=PathPrefix(`/ticketsrvc.`)
+      - traefik.http.routers.ticketsvc.middlewares=grpcweb
+      - traefik.http.services.ticketsvc.loadbalancer.server.port=50051
+      - traefik.http.services.ticketsvc.loadbalancer.server.scheme=h2c
+
+  ticketsvc-db:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - ticketsvc-mongo:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+
+  validationsvc:
+    image: ghcr.io/scalabilityissues/validation-service:master
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      - GENERATE_SIGNING_KEY=true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.validationsvc.rule=PathPrefix(`/validationsvc.`)
+      - traefik.http.routers.validationsvc.middlewares=grpcweb
+      - traefik.http.services.validationsvc.loadbalancer.server.port=50051
+      - traefik.http.services.validationsvc.loadbalancer.server.scheme=h2c
+  
+  updatesvc:
+    image: ghcr.io/scalabilityissues/update-service:main
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_HOST: "rabbitmq"
+      SMTP_PORT: "1025"
+
+  mailsvc:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+
+  price-data-scraper:
+    image: ghcr.io/scalabilityissues/price_estimator_scrape:main
+    pull_policy: always
+    depends_on:
+      minio-config-priceest:
+        condition: service_completed_successfully
+    restart: on-failure
+    command: 
+      - start_date=2024-09-01
+      - end_date=2024-09-07
+      - locations='LHR,CDG'
+    environment:
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: root
+      MINIO_SECRET_KEY: root1234
+      MINIO_BUCKET_NAME_TRAINING: "ml-data"
+      MINIO_BUCKET_NAME_MODEL: "ml-model"
+
+  price-training:
+    image: ghcr.io/scalabilityissues/price_estimator_train:main
+    pull_policy: always
+    depends_on:
+      minio-config-priceest:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    environment:
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: root
+      MINIO_SECRET_KEY: root1234
+      MINIO_BUCKET_NAME_TRAINING: "ml-data"
+      MINIO_BUCKET_NAME_MODEL: "ml-model"
+
+  price-predict:
+    image: ghcr.io/scalabilityissues/price_estimator_predict:main
+    pull_policy: always
+    depends_on:
+      minio-config-priceest:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    environment:
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: root
+      MINIO_SECRET_KEY: root1234
+      MINIO_BUCKET_NAME_TRAINING: "ml-data"
+      MINIO_BUCKET_NAME_MODEL: "ml-model"
+
+  minio:
+    image: bitnami/minio:latest
+    restart: unless-stopped
+    healthcheck:
+      test: curl --fail http://minio:9001/ || exit 1
+      start_period: 30s
+      start_interval: 5s
+    environment:
+      MINIO_ROOT_USER: root
+      MINIO_ROOT_PASSWORD: root1234
+    volumes:
+      - minio-data:/bitnami/minio/data
+
+  minio-config-priceest:
+    image: bitnami/minio-client:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    entrypoint: [""]
+    command:  /bin/bash -c "
+              mc config host add local http://minio:9000 root root1234;
+              mc admin config set local notify_amqp:data url=amqp://guest:guest@rabbitmq:5672 
+                exchange=minio-events exchange_type=direct routing_key=data;
+              mc admin config set local notify_amqp:model url=amqp://guest:guest@rabbitmq:5672 
+                exchange=minio-events exchange_type=direct routing_key=model;
+              mc admin service restart local;
+              
+              mc ping local --exit --count 10 --interval 2;
+              mc mb local/ml-data --ignore-existing;
+              mc mb local/ml-model --ignore-existing;
+              mc event add local/ml-data arn:minio:sqs::data:amqp --ignore-existing --suffix .csv --event put;
+              mc event add local/ml-model arn:minio:sqs::model:amqp --ignore-existing --suffix .txt --event put;
+              exit 0; "
+
+volumes:
+  flightmngr-pgdata:
+  ticketsvc-mongo:
+  minio-data:
