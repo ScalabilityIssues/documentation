@@ -7,6 +7,10 @@
   - Payments are simulated
 - Afterwards creates ticket
 
+## Price estimation service
+- Retrieve flight information and price data from the web
+- Train a Machine Learining model that estimate the price of a flight given some characteristics
+- Predict the prices given unseen new data 
 
 ## Ticket service
 
