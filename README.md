@@ -12,6 +12,11 @@ The system handles direct flights for a single airline, allowing administrators 
 1. Run `docker compose up -d`
 1. Enjoy at http://localhost:80
 
+
+## API Layer
+The complete set of functionalities that the system provides is available at the `proto` repository <a href="https://github.com/ScalabilityIssues/proto">here</a>. It's a special repository, that contains the definition of the grpc services of all microservices. This is included as submodule in each repository and is necessary for the server to know what it should implement and for the client to know what are the remote procedures that it can call
+
+
 ## System architecture description
 
 <img src="img/arch.jpg" alt="architecture_sketch" class="center" />
@@ -28,8 +33,7 @@ Embracing this approach, these are the most important considerations we did:
   - each repository has a github action properly configured that at each push create a Docker image of the service
   - each repository has also a `compose.yml` that allow to run the containers needed to develop and test the code of that repository 
   - the `documentation` repo contains the `compose.yml` to run the whole application
-  - there is a special repository, `proto`, that contains the definition of the grpc services of all microservices. This is included as submodule in each repository and is useful for the server to know what it should implement and for the client to know what are the remote procedures that it can call
-1. We decided to use Rust to develop most of our application since it is a compiled, reliable, high performant language. Its compiler is really strict and even if the language it's not so beginner friendly, it saves a lot of time by making emerge possible errors in advance.
+1. We decided to use Rust to develop most of our application since it is a compiled, reliable, high performant language. Its compiler is really strict and even if the language it's not so beginner friendly, it saves a lot of time by making emerge possible errors in advance. The price estimation services, instead, is written in Python because is the standard the facto programming language for the Machine Learning and also allows convenience library for data scraping. The GUI in the frontend repository is developed with NextJS framework that provides fast and effective tools for building single page web application.
 
 More considerations on the ~~perfect~~ least worst architecture for the application are available in section [Production consideration](#production-considerations)
 
@@ -92,17 +96,24 @@ The code is available <a href="https://github.com/ScalabilityIssues/update-servi
 ### Frontend
 The code is available <a href="https://github.com/ScalabilityIssues/frontend">here</a>
 
-- Customer side
-  - flight search
-  - ticket purchase
-  - ticket visualization
-- Staff side
-  - tickets validation
-- Admin side
-  - flight management
-    - create flights
-    - create planes
+The **Frontend** implements the monolithic GUI of the microservices-based system. The single-page web application provides the necessary functions for system administrators, the airline's staff, and customers. For convenience, the interface does not include user authentication and authorization; however, these features can be easily implemented in the future. Additionally, it is important to note that these security features are not considered requirements in the [architectural characteristics](architectural-characteristics.md) documentation.
 
+Summarizing the grapical interface offers the following features:
+- **Customer side**:
+  - Flight search
+  - Ticket purchase
+  - Ticket visualization
+  - Flight status updates
+
+- **Staff side**:
+  - Ticket validation for passenger check-in
+
+- **Admin side**:
+  - Add flights on the system
+  - Add planes on the system
+  - Edit the plane and the flight states
+  - Check all the information present in the systems
+  
 
 ## Production Considerations
 
