@@ -72,19 +72,26 @@ The **Ticket service** microservice is responsible of ticket CRUD. More in detai
 ### Validation service
 The code is available <a href="https://github.com/ScalabilityIssues/validation-service">here</a>
 
-- Handle the cryptographic signing of tickets through a rpc method
-- When a ticket is signed, a qr code is generated containing the ticket and the signature; this is necessary to check the validity of the ticket
-- Handle the keys to verify tickets
+The **Validation Service** microservice is responsible of everything concerning the ticket authenticity. More in details:
+- Since it deals with private keys, this service is isolated to ensure that the validation is completely detached from the ticket management
+- It handle the cryptographic signing of tickets through a rpc method; in this way [Ticket service](#ticket-service) can make a request to sign a ticket  
+- When a ticket is signed, a qr code is generated; it will contain the ticket and the signature; this is necessary to check the validity of the ticket
+- The service also handles the public keys to verify tickets validity 
 
 
 ### Flight management service
 The code is available <a href="https://github.com/ScalabilityIssues/flight-manager">here</a>
 
-- Manage airports creation, update and delete
-- Manage planes creation, update and delete
-- Manage flights creation, update and delete
-- After a flight modification, publish on the broker to notify clients that have a ticket on that flight
-- Explain DB: situation is the opposite wrt ticket service: we don't need scalability but we need schema
+The **Flight management service** microservice is responsible of the CRUD operations of airports, planes and flights. More in details:
+- Manage airports creation, update and delete. Delete is soft, is achieved by simply set the attribute `deleted = false`
+- Manage planes creation, update and delete. Delete is soft, is achieved by simply set the attribute `deleted = false`
+- Manage flights creation, update and delete. Updates and delete are handled with other tables, in particular
+  - one for departure gate updates
+  - one for the arrival gate updates
+  - one for the cancellation updates
+  - one for delay updates
+- After a flight modification, the update function publish on the broker the modified flight; [Update service](#update-service) is then responsible of notifying clients that have a ticket on that flight
+- It uses a PostgreSQL database to store the data about airports, planes and flights. Here the requirements for the choice of the database are different with respect to the [Ticket service](#ticket-service): indeed scalability is not an issue, while having a schema (and thus a relational DB) is quite useful due to the relation between the data stored
 
 ### Update service
 The code is available <a href="https://github.com/ScalabilityIssues/update-service">here</a>
@@ -120,3 +127,8 @@ Summarizing the grapical interface offers the following features:
 - api gateway
 - authentication 
 - offline validation?
+- hardcoded data
+- inform user of privacy
+- cache of offers for increased scalability
+- invalidation of tickets
+- keys rotations
