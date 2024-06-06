@@ -18,7 +18,7 @@ This project aims to enhance the airline's operational efficiency and customer s
 1. Install Docker from https://docs.docker.com/get-docker/
 1. Run `docker compose up -d`
 1. Enjoy at http://localhost:80
-1. To interact with emails go to http://localhost:8025
+1. To interact with emails go to http://localhost:8025. Note that we inserted some data about airports, planes and flights; you can find flights from 2024-06-01 to 2024-12-31.
 
 
 ## API definition
