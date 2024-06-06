@@ -64,6 +64,11 @@ services:
     restart: unless-stopped
     volumes:
       - flightmngr-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 4m
+      start_period: 30s
+      start_interval: 5s
     environment:
       POSTGRES_PASSWORD: pwd
 
@@ -216,6 +221,28 @@ services:
               mc event add local/ml-data arn:minio:sqs::data:amqp --ignore-existing --suffix .csv --event put;
               mc event add local/ml-model arn:minio:sqs::model:amqp --ignore-existing --suffix .txt --event put;
               exit 0; "
+
+  preload-data:
+    image: alpine:latest
+    depends_on:
+      flightmngr-db:
+        condition: service_healthy      
+      minio:
+        condition: service_healthy
+      minio-config-priceest:
+        condition: service_completed_successfully
+    volumes:
+      - ./demo:/data
+    environment:
+      PGHOST: flightmngr-db
+      PGUSER: postgres
+      PGPASSWORD: pwd
+    command:  /bin/sh -e -c "
+              apk add --no-cache postgresql16-client minio-client gzip; 
+              mcli config host add local http://minio:9000 root root1234; 
+              mcli cp --attr 'X-Amz-Meta-Creation-Date=2024 06 03 10:00:00 0' /data/model_*.txt local/ml-model;
+              zcat /data/dump.sql.gz | psql;
+              exit 0;"
 
 volumes:
   flightmngr-pgdata:
