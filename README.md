@@ -90,7 +90,7 @@ The **Price Estimation** microservice incorporates several key features to provi
 
 
 - Firstly, it employs a container named `ml-data-scraper` capable of periodic execution and configurable to extract flight and pricing information from various airline companies via [Kayak](https://www.kayak.com) website.
-  Once the data retrieval process concludes, it uploads the gathered information to a distributed and efficient MinIO database stored within a designated bucket, while concurrently dispatching a notification through RabbitMQ signaling the completion of the task.
+  Once the data retrieval process concludes, it uploads the gathered information to a distributed and efficient MinIO database stored within a designated bucket, while concurrently dispatching a notification through RabbitMQ signalling the completion of the task.
 - Additionally, the microservice comprises a container labelled `ml-training` which remains on standby for incoming events indicating the arrival of new flight data. 
   Upon receipt, it initiates the training of a new Machine Learning model tailored for price prediction. 
   Once the training phase is complete, the newly created model is uploaded to a designated MinIO bucket.
@@ -108,7 +108,7 @@ The **Ticket service** microservice is responsible of ticket CRUD. More in detai
 
 
 - It manages ticket creation, update and delete. The ticket deletion is implemented as a soft delete, in which the ticket is moved to a collection of deleted tickets
-- Before a ticket creation it checks that a seat is available for that flight by making a request to the [Flight management service](#flight-management-service) to check how many seats the airplane has and compare that with the number of seats already booked
+- Before a ticket creation it checks that a seat is available for that flight by making a request to the [Flight management service](#flight-management-service) to check how many seats the aeroplane has and compare that with the number of seats already booked
 - After a ticket creation or update, it is published on the broker to notify the client. 
   The notification process is handled by the [Update service](#update-service)
 - It uses a MongoDB database to store the tickets. 
