@@ -14,7 +14,7 @@ The system handles direct flights for a single airline, allowing administrators 
 1. To interact with emails go to http://localhost:8025
 
 ## API Layer
-The complete set of functionalities that the system provides is available at the `proto` repository <a href="https://github.com/ScalabilityIssues/proto">here</a>. It's a special repository, that contains the definition of the grpc services of all microservices. This is included as submodule in each repository and is necessary for the server to know what it should implement and for the client to know what are the remote procedures that it can call
+The complete set of functionalities that the system provides is available at the [`proto` repository](https://github.com/ScalabilityIssues/proto). It's a special repository, that contains the definition of the grpc services of all microservices. This is included as submodule in each repository and is necessary for the server to know what it should implement and for the client to know what are the remote procedures that it can call
 
 
 ## System architecture description
@@ -42,7 +42,7 @@ More considerations on the ~~perfect~~ least worst architecture for the applicat
 ## Service descriptions
 
 ### Sale service
-The code is available <a href="https://github.com/ScalabilityIssues/sale-service">here</a>
+The code is available [here](https://github.com/ScalabilityIssues/sale-service)
 
 The **Sale Service** microservice is responsible of providing the functionalities for purchasing tickets. More in details:
 - It handle the ticket's discovery, allowing to list the available flights for a given route of a specific day. For each possible flight an offer is requested to the [Price Estimation](#price-estimation-service) service, that returns a price for that flight. 
@@ -51,17 +51,17 @@ The **Sale Service** microservice is responsible of providing the functionalitie
 - After the successful purchase of a ticket, it sends a request to [Ticket Service](#ticket-service) to create the ticket
  
 ### Price estimation service
-The code is available <a href="https://github.com/ScalabilityIssues/price_estimator">here</a>
+The code is available [here](https://github.com/ScalabilityIssues/price_estimator)
 
 The **Price Estimation** microservice incorporates several key features to provide accurate and timely price predictions for airline tickets.
 
-- Firstly, it employs a container named `ml-data-scraper` capable of periodic execution and configurable to extract flight and pricing information from various airline companies via <a href="https://www.kayak.com">Kayak</a> website.
+- Firstly, it employs a container named `ml-data-scraper` capable of periodic execution and configurable to extract flight and pricing information from various airline companies via [Kayak](https://www.kayak.com) website.
 Once the data retrieval process concludes, it uploads the gathered information to a distributed and efficient MinIO database stored within a designated bucket, while concurrently dispatching a notification through RabbitMQ signalling the completion of the task.
 - Additionally, the microservice comprises a container labelled `ml-training` which remains on standby for incoming events indicating the arrival of new flight data. Upon receipt, it initiates the training of a new Machine Learning model tailored for price prediction. Once the training phase is complete, the newly created model is uploaded to a designated MinIO bucket.
 - Finally, the microservice encompasses a container exposing a gRPC interface specifically designed for price prediction. This interface accepts input parameters such as airport information and dates and produces reliable price predictions. In the event of a newly trained model, it seamlessly incorporates the updated model for predictions; otherwise, it utilizes the latest available model stored within the MinIO repository, ensuring up-to-date and accurate price estimations for users.
 
 ### Ticket service
-The code is available <a href="https://github.com/ScalabilityIssues/ticket-service">here</a>
+The code is available [here](https://github.com/ScalabilityIssues/ticket-service)
 
 The **Ticket service** microservice is responsible of ticket CRUD. More in details:
 
@@ -72,7 +72,7 @@ The **Ticket service** microservice is responsible of ticket CRUD. More in detai
 
 
 ### Validation service
-The code is available <a href="https://github.com/ScalabilityIssues/validation-service">here</a>
+The code is available [here](https://github.com/ScalabilityIssues/validation-service)
 
 The **Validation Service** microservice is responsible of everything concerning the ticket authenticity. More in details:
 - Since it deals with private keys, this service is isolated to ensure that the validation is completely detached from the ticket management
@@ -82,7 +82,7 @@ The **Validation Service** microservice is responsible of everything concerning 
 
 
 ### Flight management service
-The code is available <a href="https://github.com/ScalabilityIssues/flight-manager">here</a>
+The code is available [here](https://github.com/ScalabilityIssues/flight-manager)
 
 The **Flight management service** microservice is responsible of the CRUD operations of airports, planes and flights. More in details:
 
@@ -97,7 +97,7 @@ The **Flight management service** microservice is responsible of the CRUD operat
 - It uses a PostgreSQL database to store the data about airports, planes and flights. Here the requirements for the choice of the database are different with respect to the [Ticket service](#ticket-service): indeed scalability is not an issue, while having a schema (and thus a relational DB) is quite useful due to the relation between the data stored
 
 ### Update service
-The code is available <a href="https://github.com/ScalabilityIssues/update-service">here</a>
+The code is available [here](https://github.com/ScalabilityIssues/update-service)
 
 The update service microservice is responsible of sending email updates to involved users when it detects modifications on tickets or flights. More in details:
 
@@ -108,7 +108,7 @@ The update service microservice is responsible of sending email updates to invol
 
 
 ### Frontend
-The code is available <a href="https://github.com/ScalabilityIssues/frontend">here</a>
+The code is available [here](https://github.com/ScalabilityIssues/frontend)
 
 The **Frontend** implements the monolithic GUI of the microservices-based system. The single-page web application provides the necessary functions for system administrators, the airline's staff, and customers. For convenience, the interface does not include user authentication and authorization; however, these features can be easily implemented in the future. Additionally, it is important to note that these security features are not considered requirements in the [architectural characteristics](architectural-characteristics.md) documentation.
 
@@ -130,7 +130,7 @@ Summarizing the graphical interface offers the following features:
   
 
 ## Production Considerations
-In the project we focus particularly in designing and implementing an application that is compliant with the [architectural characteristics](architectural-characteristics.md). However some simplifications were adopted and here we want to explain what we would implement to make this production ready.
+In the project we focus particularly in designing and implementing an application that is compliant with the [architectural characteristics](architectural-characteristics.md). However some simplifications were adopted and here we want to explain what we would need to implement to make this production ready.
 
 ### API gateway
 Currently, all incoming requests are dispatched by the [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/) reverse proxy that acts as an ingress controller and dispatches requests to the appropriate microservices; in a real world deployment we would use an API gateway DESCRIBE BETTER
