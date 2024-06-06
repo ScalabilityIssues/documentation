@@ -11,7 +11,7 @@ The system handles direct flights for a single airline, allowing administrators 
 1. Install Docker from https://docs.docker.com/get-docker/
 1. Run `docker compose up -d`
 1. Enjoy at http://localhost:80
-
+1. To interact with emails go to http://localhost:8025
 
 ## API Layer
 The complete set of functionalities that the system provides is available at the `proto` repository <a href="https://github.com/ScalabilityIssues/proto">here</a>. It's a special repository, that contains the definition of the grpc services of all microservices. This is included as submodule in each repository and is necessary for the server to know what it should implement and for the client to know what are the remote procedures that it can call
@@ -34,6 +34,7 @@ Embracing this approach, these are the most important considerations we did:
   - each repository has also a `compose.yml` that allow to run the containers needed to develop and test the code of that repository 
   - the `documentation` repo contains the `compose.yml` to run the whole application
 1. We decided to use Rust to develop most of our application since it is a compiled, reliable, high performant language. Its compiler is really strict and even if the language it's not so beginner friendly, it saves a lot of time by making emerge possible errors in advance. The price estimation services, instead, is written in Python because is the standard the facto programming language for the Machine Learning and also allows convenience library for data scraping. The GUI in the frontend repository is developed with NextJS framework that provides fast and effective tools for building single page web application.
+1. REVERSE PROXY
 
 More considerations on the ~~perfect~~ least worst architecture for the application are available in section [Production consideration](#production-considerations)
 
@@ -63,6 +64,7 @@ Once the data retrieval process concludes, it uploads the gathered information t
 The code is available <a href="https://github.com/ScalabilityIssues/ticket-service">here</a>
 
 The **Ticket service** microservice is responsible of ticket CRUD. More in details:
+
 - It manages ticket creation, update and delete. The ticket deletion is implemented as a soft delete, in which the ticket is moved to a collection of deleted tickets
 - Before a ticket creation it checks that a seat is available for that flight by making a request to the [Flight management service](#flight-management-service) to check how many seats the airplane has and compare that with the number of seats already booked
 - After a ticket creation or update, it publishes on the broker to notify the client. The notification process is handled by the [Update service](#update-service)
@@ -83,6 +85,7 @@ The **Validation Service** microservice is responsible of everything concerning 
 The code is available <a href="https://github.com/ScalabilityIssues/flight-manager">here</a>
 
 The **Flight management service** microservice is responsible of the CRUD operations of airports, planes and flights. More in details:
+
 - Manage airports creation, update and delete. Delete is soft, is achieved by simply set the attribute `deleted = false`
 - Manage planes creation, update and delete. Delete is soft, is achieved by simply set the attribute `deleted = false`
 - Manage flights creation, update and delete. Updates and delete are handled with other tables, in particular
@@ -96,8 +99,12 @@ The **Flight management service** microservice is responsible of the CRUD operat
 ### Update service
 The code is available <a href="https://github.com/ScalabilityIssues/update-service">here</a>
 
-- Listen from the broker for changes on flights and send emails to users that have a ticket for that flight
-- Listen from the broker for changes on tickets and send an email to the user owner of the ticket
+The update service microservice is responsible of sending email updates to involved users when it detects modifications on tickets or flights. More in details:
+
+- It listens from the broker for changes on flights and send emails to users that have a ticket for that flight
+- It listens from the broker for changes on tickets and send an email to the user owner of the ticket
+- It communicates with a [MailHog](https://github.com/mailhog/MailHog) container that provides an SMTP server to send email
+- The same MailHog container offers a nice feature where you can access to a simple email inbox to check all the received mail that are sent from the SMTP server. The app is available at http://localhost:8025
 
 
 ### Frontend
@@ -105,7 +112,7 @@ The code is available <a href="https://github.com/ScalabilityIssues/frontend">he
 
 The **Frontend** implements the monolithic GUI of the microservices-based system. The single-page web application provides the necessary functions for system administrators, the airline's staff, and customers. For convenience, the interface does not include user authentication and authorization; however, these features can be easily implemented in the future. Additionally, it is important to note that these security features are not considered requirements in the [architectural characteristics](architectural-characteristics.md) documentation.
 
-Summarizing the grapical interface offers the following features:
+Summarizing the graphical interface offers the following features:
 - **Customer side**:
   - Flight search
   - Ticket purchase
@@ -123,12 +130,26 @@ Summarizing the grapical interface offers the following features:
   
 
 ## Production Considerations
+In the project we focus particularly in designing and implementing an application that is compliant with the [architectural characteristics](architectural-characteristics.md). However some simplifications were adopted and here we want to explain what we would implement to make this production ready.
 
-- api gateway
-- authentication 
-- offline validation?
-- hardcoded data
-- inform user of privacy
-- cache of offers for increased scalability
-- invalidation of tickets
-- keys rotations
+### API gateway
+Currently, all incoming requests are dispatched by the [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/) reverse proxy that acts as an ingress controller and dispatches requests to the appropriate microservices; in a real world deployment we would use an API gateway DESCRIBE BETTER
+
+### Authentication
+Currently there is no authentication at all; authentication is needed for admin and possibly also for staff, depending on specific security requirements of the company and airport.
+
+### User interface to handle airports and airplanes
+In the version delivered, the backend has the functionalities to handle airports; however it is not possible to handle them via the frontend due to the strong implications: think for example at the case where an airport is deleted but is used for flight, this will lead to inconsistencies that should be avoided. All this kind of corner cases should be discussed with the final company to create an ad hoc implementation.
+(same for airplanes???)
+
+### Caching offers
+Since the application receives a lot of requests in term of available flights for a given route and date, it makes sense to cache offers for a certain time window in order to lower the amount of workload the price estimator has to do, with the aim of improve performance. 
+
+### Invalidation of tickets
+Another feature that is currently not available is the invalidation of tickets by staff members. This can come in handy when the airline company wants to withdraw the validity of a ticket, because there are no conditions to admit the passenger on the flight
+
+### Keys rotations
+To ensure bulletproof security of digital signatures, it is a common practice to perform key rotation. This is easy to achieve, but still not implemented in our application. However notice that our grpc method that returns the validation key supports it by returning a list of keys and not just a single key.
+
+### Law compliance
+Before delivering the product to the company, we would assess the compliance of our product to all applicable law (such as GDPR) with the help of an expert.
