@@ -240,7 +240,7 @@ services:
     command:  /bin/sh -e -c "
               apk add --no-cache postgresql16-client minio-client gzip; 
               mcli config host add local http://minio:9000 root root1234; 
-              mcli cp --attr 'X-Amz-Meta-Creation-Date=2024 06 03 10:00:00 0' /data/model_*.txt local/ml-model;
+              mcli cp --attr 'X-Amz-Meta-Creation-Date=Mon Jun  3 15:31:31 2024' /data/model_*.txt local/ml-model;
               zcat /data/dump.sql.gz | psql;
               exit 0;"
 
