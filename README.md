@@ -13,8 +13,8 @@ The system handles direct flights for a single airline, allowing administrators 
 1. Enjoy at http://localhost:80
 1. To interact with emails go to http://localhost:8025
 
-## API Layer
-The complete set of functionalities that the system provides is available at the `proto` repository <a href="https://github.com/ScalabilityIssues/proto">here</a>. It's a special repository, that contains the definition of the grpc services of all microservices. This is included as submodule in each repository and is necessary for the server to know what it should implement and for the client to know what are the remote procedures that it can call
+## API definition
+The complete set of functionalities that the system provides is available at the `proto` repository <a href="https://github.com/ScalabilityIssues/proto">here</a>. It's a special repository, that contains the definition of the grpc services of all microservices. This is included as submodule in each repository and necessary for the server to know what it should implements and for the client to know what are the remote procedures that it can call
 
 
 ## System architecture description
@@ -73,6 +73,8 @@ The **Ticket service** microservice is responsible of ticket CRUD. More in detai
 
 ### Validation service
 The code is available <a href="https://github.com/ScalabilityIssues/validation-service">here</a>
+
+OFFLINE VALIDATION
 
 The **Validation Service** microservice is responsible of everything concerning the ticket authenticity. More in details:
 - Since it deals with private keys, this service is isolated to ensure that the validation is completely detached from the ticket management
