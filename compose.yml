@@ -1,7 +1,7 @@
 name: simurgh-demo
 
 services:
-  
+
   proxy:
     image: traefik:3.0
     restart: unless-stopped
@@ -37,8 +37,8 @@ services:
     healthcheck:
       test: rabbitmq-diagnostics -q check_port_connectivity
       interval: 4m
-      start_period: 30s
-      start_interval: 5s
+      start_period: 120s
+      start_interval: 10s
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -90,11 +90,11 @@ services:
     image: ghcr.io/scalabilityissues/ticket-service:master
     pull_policy: always
     restart: unless-stopped
-    environment:    
-        DATABASE_URL: "mongodb://mongo:mongo@ticketsvc-db:27017/"
-        RABBITMQ_USERNAME: "guest"
-        RABBITMQ_PASSWORD: "guest"
-        RABBITMQ_HOST: "rabbitmq"
+    environment:
+      DATABASE_URL: "mongodb://mongo:mongo@ticketsvc-db:27017/"
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_HOST: "rabbitmq"
     labels:
       - traefik.enable=true
       - traefik.http.routers.ticketsvc.rule=PathPrefix(`/ticketsrvc.`)
@@ -123,7 +123,7 @@ services:
       - traefik.http.routers.validationsvc.middlewares=grpcweb
       - traefik.http.services.validationsvc.loadbalancer.server.port=50051
       - traefik.http.services.validationsvc.loadbalancer.server.scheme=h2c
-  
+
   updatesvc:
     image: ghcr.io/scalabilityissues/update-service:main
     pull_policy: always
@@ -147,7 +147,7 @@ services:
       minio-config-priceest:
         condition: service_completed_successfully
     restart: on-failure
-    command: 
+    command:
       - start_date=2024-09-01
       - end_date=2024-09-07
       - locations='LHR,CDG'
@@ -206,27 +206,16 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    entrypoint: [""]
-    command:  /bin/bash -c "
-              mc config host add local http://minio:9000 root root1234;
-              mc admin config set local notify_amqp:data url=amqp://guest:guest@rabbitmq:5672 
-                exchange=minio-events exchange_type=direct routing_key=data;
-              mc admin config set local notify_amqp:model url=amqp://guest:guest@rabbitmq:5672 
-                exchange=minio-events exchange_type=direct routing_key=model;
-              mc admin service restart local;
-              
-              mc ping local --exit --count 10 --interval 2;
-              mc mb local/ml-data --ignore-existing;
-              mc mb local/ml-model --ignore-existing;
-              mc event add local/ml-data arn:minio:sqs::data:amqp --ignore-existing --suffix .csv --event put;
-              mc event add local/ml-model arn:minio:sqs::model:amqp --ignore-existing --suffix .txt --event put;
-              exit 0; "
+    entrypoint: [ "" ]
+    command: /bin/bash -c " mc config host add local http://minio:9000 root root1234; mc admin config set local notify_amqp:data url=amqp://guest:guest@rabbitmq:5672 exchange=minio-events exchange_type=direct routing_key=data; mc admin config set local notify_amqp:model url=amqp://guest:guest@rabbitmq:5672 exchange=minio-events exchange_type=direct routing_key=model; mc admin service restart local;
+
+      mc ping local --exit --count 10 --interval 2; mc mb local/ml-data --ignore-existing; mc mb local/ml-model --ignore-existing; mc event add local/ml-data arn:minio:sqs::data:amqp --ignore-existing --suffix .csv --event put; mc event add local/ml-model arn:minio:sqs::model:amqp --ignore-existing --suffix .txt --event put; exit 0; "
 
   preload-data:
     image: alpine:latest
     depends_on:
       flightmngr-db:
-        condition: service_healthy      
+        condition: service_healthy
       minio:
         condition: service_healthy
       minio-config-priceest:
@@ -237,12 +226,7 @@ services:
       PGHOST: flightmngr-db
       PGUSER: postgres
       PGPASSWORD: pwd
-    command:  /bin/sh -e -c "
-              apk add --no-cache postgresql16-client minio-client gzip; 
-              mcli config host add local http://minio:9000 root root1234; 
-              mcli cp --attr 'X-Amz-Meta-Creation-Date=Mon Jun  3 15:31:31 2024' /data/model_*.txt local/ml-model;
-              zcat /data/dump.sql.gz | psql;
-              exit 0;"
+    command: /bin/sh -e -c " apk add --no-cache postgresql16-client minio-client gzip; mcli config host add local http://minio:9000 root root1234; mcli cp --attr 'X-Amz-Meta-Creation-Date=Mon Jun  3 15:31:31 2024' /data/model_*.txt local/ml-model; zcat /data/dump.sql.gz | psql; exit 0;"
 
 volumes:
   flightmngr-pgdata:
