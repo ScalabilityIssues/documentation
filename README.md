@@ -74,12 +74,12 @@ More considerations on the ~~perfect~~ least worst architecture for the applicat
 The **Sale Service** microservice is responsible for providing the functionalities for purchasing tickets. 
 
 - It handles the discovery of tickets, allowing to list the available flights for a given route on a specific day. 
-  For each possible flight, an offer is requested to the [Price Estimation](#price-estimation-service) service, which returns a price for that flight.
+  For each possible flight, an offer is requested to the [Price Estimation](#price-estimation-service-repo) service, which returns a price for that flight.
 - Offers are placed into a JWT that is signed. 
   This allows to send offers to a client without the need to keep track of them; 
   when the client decides to buy one of them, the offer can be trusted if the signature is valid
 - The service also handles the purchase flow, where payments are simulated
-- After the successful purchase of a ticket, it sends a request to [Ticket Service](#ticket-service) to create the ticket
+- After the successful purchase of a ticket, it sends a request to [Ticket Service](#ticket-service-repo) to create the ticket
  
 ### Price estimation service [[repo](https://github.com/ScalabilityIssues/price_estimator)]
 
@@ -103,9 +103,9 @@ It is made up of three sub-components, as well as a MinIO block storage cluster.
 The **Ticket service** microservice is responsible for ticket CRUD operations.
 
 - It manages ticket creation, update and delete. The ticket deletion is implemented as a soft delete, in which the ticket is moved to a collection of deleted tickets.
-- Before a ticket creation it checks that a seat is available for that flight by making a request to the [Flight management service](#flight-management-service) to check how many seats the plane has and compare that with the number of seats already booked.
+- Before a ticket creation it checks that a seat is available for that flight by making a request to the [Flight management service](#flight-management-service-repo) to check how many seats the plane has and compare that with the number of seats already booked.
 - After ticket creation or update, an AMQP event is emitted. 
-  The notification process is handled by the [Update service](#update-service)
+  The notification process is handled by the [Update service](#update-service-repo)
 - It uses a MongoDB database to store the tickets. 
   We chose a non-relational database because ticket management is expected to be the limiting factor when it comes to scalability: 
   the number of flights, airports and planes to manage is negligible compared to the number of tickets. 
@@ -118,7 +118,7 @@ The **Ticket service** microservice is responsible for ticket CRUD operations.
 
 The **Validation Service** microservice is responsible for everything concerning ticket authenticity. 
 
-- Since it deals with private keys, this service is isolated from [ticket service](#ticket-service) to ensure that the validation is completely detached from the ticket management
+- Since it deals with private keys, this service is isolated from [ticket service](#ticket-service-repo) to ensure that the validation is completely detached from the ticket management
 - The validation flow is designed to work offline. 
   By encoding signed ticket details inside a qr code, all that is necessary to validate them is a public key, which can be stored inside the device of a staff member.
 - It handles the cryptographic signing of tickets through a grpc method, which allows other services to request to sign a ticket.
@@ -143,9 +143,9 @@ The **Flight management service** microservice is responsible for the CRUD opera
   - one for delay updates
 - We designed the resources handled by this service to be immutable, which ensures external references to them remain valid throughout the lifecycle of the application
 - After a flight is updated an AMQP event is generated; 
-  [Update service](#update-service) is then responsible for notifying clients who have a ticket on that flight
+  [Update service](#update-service-repo) is then responsible for notifying clients who have a ticket on that flight
 - It uses a PostgreSQL database to store the data about airports, planes and flights. 
-  Here the requirements for the choice of the database are different with respect to the [Ticket service](#ticket-service).  
+  Here the requirements for the choice of the database are different with respect to the [Ticket service](#ticket-service-repo).  
   We expect this service to get considerably more read than write interactions, which means that database replication should be enough to ensure scalability. 
   Furthermore, since the data handled by this service is crucial to most other services, the advantages offered by a relational database are significant. 
 
@@ -195,7 +195,7 @@ However, some simplifications were adopted and here we want to explain what we w
 
 
 ### API gateway
-In a real-world deployment, we could implement an API gateway, to allow better decoupling between frontend and backend; moreover, it would also allow us to more easily incorporate [authentication](#authentication) and error handling.
+In a real-world deployment, we could implement an API gateway, to allow better decoupling between frontend and backend; moreover, it would also allow us to more easily incorporate [authentication](#authentication-repo) and error handling.
 
 
 ### Authentication
@@ -218,7 +218,7 @@ This can come in handy when the airline company wants to withdraw the validity o
 
 
 ### Mail service
-In the current version of the project, the emails are sent from the [update service](#update-service) by using a dummy mail server; in a real production environment, it is necessary to use a valid mail service that allows the delivery of emails to customers.
+In the current version of the project, the emails are sent from the [update service](#update-service-repo) by using a dummy mail server; in a real production environment, it is necessary to use a valid mail service that allows the delivery of emails to customers.
 
 
 ### Keys rotations
