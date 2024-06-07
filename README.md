@@ -195,7 +195,7 @@ However, some simplifications were adopted and here we want to explain what we w
 
 
 ### API gateway
-In a real-world deployment, we could implement an API gateway, to allow better decoupling between frontend and backend; moreover, it would also allow us to more easily incorporate [authentication](#authentication-repo) and error handling.
+In a real-world deployment, we could implement an API gateway, to allow better decoupling between frontend and backend; moreover, it would also allow us to more easily incorporate [authentication](#authentication) and error handling.
 
 
 ### Authentication
