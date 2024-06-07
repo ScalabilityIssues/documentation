@@ -194,12 +194,23 @@ In the project, we focus particularly on designing and implementing an applicati
 However, some simplifications were adopted and here we want to explain what we would need to implement to make this production ready.
 
 
+### Kubernetes
+In the demo we used a docker compose stack, while Kubernetes would be more suited for a production deployment.
+It would allow us use operators to manage many parts of the infrastructure, such as an ingress to configure the reverse proxy, and dedicated cluster operators to manage the Postgres and MinIO clusters, as well as RabbitMQ.
+Kubernetes could be also used to better handle scheduling of the scraping for [price prediction](#price-estimation-service-repo).
+
+
 ### API gateway
 In a real-world deployment, we could implement an API gateway, to allow better decoupling between frontend and backend; moreover, it would also allow us to more easily incorporate [authentication](#authentication) and error handling.
 
 
 ### Authentication
 Currently, there is no authentication at all; authentication is needed for admin and possibly also for staff, depending on specific security requirements of the company and airports.
+
+
+### Zero Trust
+All internal traffic currently does not use encryption, while it would make sense to deploy TLS everywhere.
+This could be done more easily using [cert-manager](https://cert-manager.io/) and sibling projects.
 
 
 ### User interface to handle airports and planes
